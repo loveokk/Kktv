@@ -1,6 +1,6 @@
 # Kktv
 
-Kktv 是一个本地优先的 AI 视频与短剧创作工作台，基于 MIT 许可的 BeeFTV 独立分支维护。
+Kktv 是一个本地优先的 AI 视频与短剧创作工作台
 
 项目重点：
 
@@ -66,6 +66,3 @@ docker compose -p kktv-deploy -f docker-compose.local.yml up -d --build
 
 不要依赖上游的 `latest` 镜像。生产环境应固定自己的镜像标签，并保留自己的数据卷。
 
-## 上游与许可
-
-本项目基于 BeeFTV 的 MIT 许可代码进行独立维护。原始版权和许可声明保留在 `LICENSE` 与 `NOTICE` 中。
