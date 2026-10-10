@@ -564,13 +564,12 @@ export function CanvasScriptNodeContent({
                 </div>
                 </div>
             </Modal>
-            <RowHandle side="left" top={STORYBOARD_HEADER_HEIGHT + 24} scale={scale} tone="idle" theme={theme} title="连接文本节点作为项目设定" onPointerDown={(event) => onConnectStart(event, "context", "target")} />
+            <RowHandle side="left" top={STORYBOARD_HEADER_HEIGHT + 24} scale={scale} tone="idle" theme={theme} title="连接文本输入节点" onPointerDown={(event) => onConnectStart(event, "context", "target")} />
             {rows.map((row, index) => {
                 const top = STORYBOARD_HEADER_HEIGHT + index * STORYBOARD_ROW_HEIGHT + STORYBOARD_ROW_HEIGHT / 2 - scrollTop;
                 if (top < STORYBOARD_HEADER_HEIGHT + 4 || top > STORYBOARD_HEADER_HEIGHT + tableHeight - 4) return null;
                 return (
                     <div key={`ports-${row.id}`}>
-                        <RowHandle side="left" top={top} scale={scale} tone={batchItemTone(batchItemByRowId.get(row.id)) || row.status} theme={theme} onPointerDown={(event) => onConnectStart(event, row.id, "target")} />
                         <RowHandle side="right" top={top} scale={scale} tone={batchItemTone(batchItemByRowId.get(row.id)) || row.status} theme={theme} onPointerDown={(event) => onConnectStart(event, row.id, "source")} />
                     </div>
                 );
