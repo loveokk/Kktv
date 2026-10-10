@@ -378,49 +378,22 @@ export function CanvasScriptNodeContent({
                         </div>
                     ))
                 ) : (
-                    <div className="grid h-full min-h-44 w-full place-items-center px-4 py-5">
-                        <section
-                            className="w-full max-w-[560px] rounded-[28px] border p-4 shadow-sm"
-                            style={{ background: theme.node.panel, borderColor: theme.node.stroke, color: theme.node.text }}
-                            onMouseDown={(event) => event.stopPropagation()}
-                        >
-                            <div className="mb-4 flex items-center gap-2">
-                                <FileText className="size-4" style={{ color: theme.node.muted }} />
-                                <span className="text-sm font-semibold">脚本生成器</span>
-                            </div>
-                            <div className="grid gap-2">
-                                {SCRIPT_BUILDER_MODES.map((mode) => {
-                                    const Icon = mode.icon;
-                                    const selected = builderMode === mode.id;
-                                    return (
-                                        <button
-                                            key={mode.id}
-                                            type="button"
-                                            className="flex min-h-14 w-full items-center gap-3 rounded-2xl border px-4 text-left outline-none transition hover:-translate-y-0.5 hover:brightness-105 focus-visible:ring-2"
-                                            style={{
-                                                borderColor: selected ? theme.accent.primary : theme.node.stroke,
-                                                background: selected ? `${theme.accent.primary}18` : theme.node.fill,
-                                                "--tw-ring-color": theme.accent.primary,
-                                            } as CSSProperties}
-                                            onClick={(event) => {
-                                                event.stopPropagation();
-                                                setBuilderMode(mode.id);
-                                            }}
-                                        >
-                                            <span className="grid size-8 shrink-0 place-items-center rounded-xl" style={{ background: selected ? `${theme.accent.primary}22` : theme.toolbar.itemHover, color: selected ? theme.accent.primary : theme.node.muted }}>
-                                                <Icon className="size-4" />
-                                            </span>
-                                            <span className="min-w-0 flex-1">
-                                                <span className="block text-sm font-semibold">{mode.label}</span>
-                                                <span className="mt-0.5 block text-[var(--fs-label)]" style={{ color: theme.node.muted }}>{mode.description}</span>
-                                            </span>
-                                            {selected ? <Check className="size-4 shrink-0" style={{ color: theme.accent.primary }} /> : null}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </section>
-                    </div>
+                    <button
+                        type="button"
+                        className="grid h-full min-h-36 w-full place-items-center"
+                        onMouseDown={(event) => event.stopPropagation()}
+                        onClick={(event) => {
+                            event.stopPropagation();
+                            onAddRow();
+                        }}
+                    >
+                        <span className="flex flex-col items-center gap-2.5">
+                            <span className="text-sm font-bold">＋ 添加第一个镜头</span>
+                            <span className="text-[var(--fs-label)] font-medium" style={{ color: theme.node.faint }}>
+                                也可在下方选择生成方式，描述剧情后一键生成分镜表
+                            </span>
+                        </span>
+                    </button>
                 )}
             </div>
             {rows.length ? (
@@ -440,6 +413,42 @@ export function CanvasScriptNodeContent({
                     </button>
                 </div>
             ) : null}
+            <div className="shrink-0 border-t border-b px-3 py-2.5" style={{ borderColor: theme.node.stroke, background: theme.node.panel }}>
+                <div className="mb-2 flex items-center gap-2">
+                    <FileText className="size-3.5" style={{ color: theme.node.muted }} />
+                    <span className="text-[var(--fs-label)] font-semibold">脚本生成器</span>
+                </div>
+                <div className="grid gap-2 md:grid-cols-3">
+                    {SCRIPT_BUILDER_MODES.map((mode) => {
+                        const Icon = mode.icon;
+                        const selected = builderMode === mode.id;
+                        return (
+                            <button
+                                key={mode.id}
+                                type="button"
+                                className="flex min-h-12 min-w-0 items-center gap-2 rounded-xl border px-3 text-left outline-none transition hover:-translate-y-0.5 hover:brightness-105 focus-visible:ring-2"
+                                style={{
+                                    borderColor: selected ? theme.accent.primary : theme.node.stroke,
+                                    background: selected ? `${theme.accent.primary}18` : theme.node.fill,
+                                    color: theme.node.text,
+                                    "--tw-ring-color": theme.accent.primary,
+                                } as CSSProperties}
+                                onMouseDown={(event) => event.stopPropagation()}
+                                onClick={(event) => {
+                                    event.stopPropagation();
+                                    setBuilderMode(mode.id);
+                                }}
+                            >
+                                <span className="grid size-7 shrink-0 place-items-center rounded-lg" style={{ background: selected ? `${theme.accent.primary}22` : theme.toolbar.itemHover, color: selected ? theme.accent.primary : theme.node.muted }}>
+                                    <Icon className="size-3.5" />
+                                </span>
+                                <span className="min-w-0 flex-1 truncate text-xs font-semibold">{mode.label}</span>
+                                {selected ? <Check className="size-3.5 shrink-0" style={{ color: theme.accent.primary }} /> : null}
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
             <div className="relative grid shrink-0 grid-rows-[minmax(0,1fr)_28px] gap-1.5 rounded-b-[17px] p-2.5" style={{ height: composerHeight, background: theme.node.panel }}>
                 <CanvasResourceMentionTextarea
                     rows={1}
