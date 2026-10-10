@@ -551,6 +551,7 @@ export function CanvasScriptNodeContent({
                         onClick={submitPrompt}
                     />
                 </div>
+                </div>
             </Modal>
             <RowHandle side="left" top={STORYBOARD_HEADER_HEIGHT + 24} scale={scale} tone="idle" theme={theme} title="连接文本节点作为项目设定" onPointerDown={(event) => onConnectStart(event, "context", "target")} />
             {rows.map((row, index) => {
