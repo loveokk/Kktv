@@ -172,7 +172,6 @@ export function CanvasScriptNodeContent({
     const rows = node.metadata?.storyboard?.rows || [];
     const [prompt, setPrompt] = useState(node.metadata?.composerContent || "");
     const builderMode = (node.metadata?.storyboardBuilderMode as ScriptBuilderMode) || "script";
-    const [builderMenuOpen, setBuilderMenuOpen] = useState(false);
     const [composerOpen, setComposerOpen] = useState(false);
     const [scrollTop, setScrollTop] = useState(0);
     const composerHeightChangeRef = useRef(onComposerHeightChange);
@@ -215,6 +214,10 @@ export function CanvasScriptNodeContent({
     const canMerge = pipeline.successfulVideoNodeIds.length >= 2 && pipeline.final.success === 0;
     const allRowIds = pipeline.rows.map((item) => item.row.id);
     const moreMenuItems: MenuProps["items"] = [
+        { key: "script-input", icon: <FileText className="size-3.5" />, label: "剧本生成分镜脚本", onClick: () => onOpenScriptInput?.() },
+        { key: "character-input", icon: <UserRound className="size-3.5" />, label: "角色生成分镜脚本", onClick: () => onOpenCharacterInput?.() },
+        { key: "write-storyboard", icon: <PencilLine className="size-3.5" />, label: "自己编写分镜脚本", onClick: () => onOpen() },
+        { type: "divider" },
         { key: "generate-images", icon: <ImageIcon className="size-3.5" />, label: "生成未完成分镜图", disabled: pipelineDisabled || pipeline.images.incomplete === 0, onClick: () => onGenerateImages(allRowIds) },
         { key: "generate-videos", icon: <Video className="size-3.5" />, label: "生成未完成视频", disabled: pipelineDisabled || pipeline.videos.incomplete === 0, onClick: () => onGenerateVideos(allRowIds) },
         {
@@ -285,44 +288,6 @@ export function CanvasScriptNodeContent({
                 <span className="text-[var(--fs-caption)] font-semibold tabular-nums" style={{ color: theme.node.muted }}>
                     {rows.length} 镜 · {totalDuration}s
                 </span>
-                <Popover
-                    open={builderMenuOpen}
-                    onOpenChange={setBuilderMenuOpen}
-                    trigger="click"
-                    placement="bottomRight"
-                    content={
-                        <div className="grid w-64 gap-2">
-                            {SCRIPT_BUILDER_MODES.map((mode) => {
-                                const Icon = mode.icon;
-                                return (
-                                    <button
-                                        key={mode.id}
-                                        type="button"
-                                        className="flex items-start gap-2 rounded-xl border px-3 py-2 text-left transition hover:brightness-105"
-                                        style={{ borderColor: theme.node.stroke, background: theme.node.fill, color: theme.node.text }}
-                                        onClick={() => {
-                                            setBuilderMenuOpen(false);
-                                            if (mode.id === "script") onOpenScriptInput?.();
-                                            else if (mode.id === "characters") onOpenCharacterInput?.();
-                                            else onOpen();
-                                        }}
-                                    >
-                                        <Icon className="mt-0.5 size-3.5 shrink-0" />
-                                        <span className="min-w-0">
-                                            <span className="block text-xs font-semibold">{mode.label}</span>
-                                            <span className="mt-0.5 block text-[var(--fs-label)]" style={{ color: theme.node.muted }}>{mode.description}</span>
-                                        </span>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    }
-                >
-                    <Button size="small" type="text" icon={<FileText className="size-3.5" />} style={{ color: theme.node.muted }}>
-                        生成方式
-                        <ChevronDown className="size-3" />
-                    </Button>
-                </Popover>
                 <Tooltip title="添加镜头">
                     <button
                         type="button"
@@ -450,7 +415,7 @@ export function CanvasScriptNodeContent({
                         <span className="flex flex-col items-center gap-2.5">
                             <span className="text-sm font-bold">＋ 添加第一个镜头</span>
                             <span className="text-[var(--fs-label)] font-medium" style={{ color: theme.node.faint }}>
-                                点击顶部“生成方式”选择生成流程
+                                点击右上角“...”选择生成流程
                             </span>
                         </span>
                     </button>
