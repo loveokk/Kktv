@@ -13,8 +13,8 @@ export function WorkspaceSidebarSocialLinks() {
                 rootClassName="app-workspace-qq-popover"
                 content={
                     <div className="app-workspace-qq-card">
-                        <img src="/qq-qr.png" alt="QQ 好友二维码" />
-                        <span>QQ: 747474642</span>
+                        <img src="/qq-qr.png" alt="QQ 好友二维码" style={{ display: "block", width: "180px", height: "198px", objectFit: "contain", borderRadius: "10px" }} />
+                        <span style={{ color: "#333", fontSize: "12px", fontWeight: 600 }}>QQ: 747474642</span>
                     </div>
                 }
             >
