@@ -1,3 +1,4 @@
+import { App } from "antd";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from "react";
 import { AlertCircle, BookOpenCheck, Clock3, Download, FileText, Image as ImageIcon, LoaderCircle, Music2, Pencil, Play, RefreshCw, Square, Video } from "lucide-react";
 
@@ -297,12 +298,18 @@ function shortTaskId(id: string) {
 }
 
 function ErrorContent({ node, theme, onRetry, onReloadResource, onOpenTaskDetails }: Pick<CanvasNodeContentProps, "node" | "theme" | "onRetry" | "onReloadResource" | "onOpenTaskDetails">) {
+    const { message } = App.useApp();
     const canvasProjectId = useCanvasStore((state) => state.projects.find((project) => project.nodes.some((item) => item.id === node.id))?.id);
     const explanation = explainGenerationError({ code: node.metadata?.generationErrorCode || node.metadata?.taskErrorCode, message: node.metadata?.errorDetails }, { taskId: node.metadata?.taskId, model: node.metadata?.model, createdAt: node.metadata?.taskCreatedAt, stage: node.metadata?.taskStage });
     const repairSave = canvasProjectId && explanation.reason.includes("画布尚未保存")
         ? async () => {
-              await repairCanvasSaveState(canvasProjectId);
-              onRetry?.(node);
+              try {
+                  await repairCanvasSaveState(canvasProjectId);
+                  onRetry?.(node);
+              } catch (error) {
+                  message.error(error instanceof Error ? error.message : "修复画布失败");
+                  throw error;
+              }
           }
         : undefined;
     const errorDisplayTask = {
