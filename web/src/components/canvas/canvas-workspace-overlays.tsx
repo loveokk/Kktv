@@ -177,7 +177,7 @@ export function CanvasConnectionCreateMenu({ pending, viewport, viewportSize, co
             command("audio", "音频", CanvasNodeType.Audio, getNodeIcon(CanvasNodeType.Audio), "node", getDisabledReason(CanvasNodeType.Audio)),
             command("smart-edit", "智能剪辑", CanvasNodeType.MediaConversion, getNodeIcon(CanvasNodeType.MediaConversion), "node", "暂不可用"),
             command("director", "导演台", CanvasNodeType.Config, getNodeIcon(CanvasNodeType.Config), "node", "暂不可用"),
-            command("script", "脚本", CanvasNodeType.Script, getNodeIcon(CanvasNodeType.Script), "node", "暂不可用"),
+            command("script", "分镜脚本", CanvasNodeType.Script, getNodeIcon(CanvasNodeType.Script)),
         ];
     }, [getDisabledReason, onClose, onCreate]);
 

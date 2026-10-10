@@ -24,6 +24,34 @@ Web:      http://localhost:3000
 Backend:  http://127.0.0.1:8080
 ```
 
+## 剧本转分镜脚本
+
+仓库内置独立脚本：
+
+```bash
+node scripts/script-to-storyboard.mjs --input story.md --out ./storyboard-output
+```
+
+也可以直接输入故事创意：
+
+```bash
+node scripts/script-to-storyboard.mjs --idea "女频复仇，现代都市，30集短剧" --out ./storyboard-output
+```
+
+无模型环境可以先看结构：
+
+```bash
+node scripts/script-to-storyboard.mjs --idea "测试故事" --dry-run
+```
+
+使用 OpenAI 兼容接口时配置：
+
+```bash
+export KKTV_SCRIPT_API_BASE="https://ark.cn-beijing.volces.com/api/v3"
+export KKTV_SCRIPT_API_KEY="你的 API Key"
+export KKTV_SCRIPT_MODEL="你的模型 ID"
+```
+
 ## 开发
 
 前端：
