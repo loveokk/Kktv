@@ -725,15 +725,32 @@ export async function repairCanvasSaveState(id: string) {
     const expected = captureUserScope();
     const scope = expected.userScope;
     assertDispatchGuard(expected);
+    const local = useCanvasStore.getState().openProject(id);
+    if (!local) throw new Error("本地画布不存在，无法修复保存");
+    const endpoint = `/canvas-projects/${encodeURIComponent(id)}`;
+    let serverRevision = 0;
+    try {
+        const remote = await http.get<{ project?: { revision?: number } }>(endpoint, { expectedScope: expected });
+        serverRevision = Number(remote.project?.revision) || 0;
+    } catch (error) {
+        if (!(error instanceof ApiError && error.status === 404)) throw error;
+    }
+    const response = await http.put<{ project: { revision: number; updatedAt?: string } }>(endpoint, {
+        project: { ...local, revision: serverRevision },
+    }, { expectedScope: expected });
+    const savedRevision = Number(response.project?.revision) || serverRevision + 1;
+    useCanvasStore.setState((state) => ({
+        projects: state.projects.map((project) => project.id === id
+            ? { ...project, revision: savedRevision, updatedAt: response.project?.updatedAt ?? project.updatedAt }
+            : project),
+    }));
     await clearCanvasOperationJournal(id, scope);
     await clearCanvasPendingProjection(id, scope);
     clearCanvasExternalRevisionConflict(scope, id);
     clearCanvasDocumentBase(scope, id);
-    useCanvasStore.setState((state) => ({
-        projects: state.projects.map((project) => project.id === id ? { ...project, revision: 0 } : project),
-    }));
+    const saved = useCanvasStore.getState().openProject(id);
+    if (saved) recordCanvasDocumentBase(saved, scope);
     await flushCanvasStorePersistence().catch(() => undefined);
-    await syncLocalCanvasProject(id, false, expected);
 }
 
 /** Timeline edits live on the canvas document. */
