@@ -305,10 +305,20 @@ function ErrorContent({ node, theme, onRetry, onReloadResource, onOpenTaskDetail
         ? async () => {
               try {
                   await repairCanvasSaveState(canvasProjectId);
-                  onRetry?.(node);
+                  message.success({ content: "画布已修复，请重新生成", duration: 6 });
               } catch (error) {
-                  message.error(error instanceof Error ? error.message : "修复画布失败");
-                  throw error;
+                  const detail = error instanceof Error ? error.message : "修复画布失败";
+                  message.error({ content: detail, duration: 12 });
+                  useCanvasStore.setState((state) => ({
+                      projects: state.projects.map((project) => project.id === canvasProjectId
+                          ? {
+                                ...project,
+                                nodes: project.nodes.map((item) => item.id === node.id
+                                    ? { ...item, metadata: { ...item.metadata, errorDetails: detail, generationErrorCode: undefined, taskErrorCode: undefined } }
+                                    : item),
+                            }
+                          : project),
+                  }));
               }
           }
         : undefined;
@@ -339,7 +349,7 @@ function ErrorContent({ node, theme, onRetry, onReloadResource, onOpenTaskDetail
                     explanation={explanation}
                     context={{ taskId: node.metadata?.taskId, model: node.metadata?.model, createdAt: node.metadata?.taskCreatedAt, stage: node.metadata?.taskStage, providerRequestId: node.metadata?.taskProviderRequestId, failureDiagnostics: node.metadata?.taskFailureDiagnostics, errorSummary: node.metadata?.generationErrorSummary, completedAt: node.metadata?.taskCompletedAt, updatedAt: node.metadata?.taskUpdatedAt }}
                     onOpenDetails={node.metadata?.taskId && onOpenTaskDetails ? () => onOpenTaskDetails(node) : undefined}
-                    onRepairSave={repairSave ? () => { void repairSave().catch(() => undefined); } : undefined}
+                    onRepairSave={repairSave ? () => { void repairSave(); } : undefined}
                     onRetry={submissionUncertain || explanation.uncertain || explanation.category === "download_failed" ? undefined : onRetry ? () => onRetry(node) : undefined}
                     retryLabel={node.metadata?.isBatchRoot ? "重新生成失败项" : "重新生成"}
                 />
