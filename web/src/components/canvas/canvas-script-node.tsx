@@ -422,13 +422,13 @@ export function CanvasScriptNodeContent({
                     ))
                 ) : (
                     <div className="grid h-full min-h-[420px] w-full place-items-center px-8 py-10">
-                        <div className="w-full max-w-[520px]">
+                        <div className="w-[420px] max-w-full">
                             <div className="mb-3 flex items-center gap-2 text-sm font-semibold" style={{ color: theme.node.text }}>
                                 <FileText className="size-4" />
                                 脚本生成器
                             </div>
-                            <section className="rounded-[28px] border p-6" style={{ background: theme.node.panel, borderColor: theme.node.stroke }}>
-                                <div className="mb-8 flex justify-center">
+                            <section className="aspect-square rounded-[28px] border p-6" style={{ background: theme.node.panel, borderColor: theme.node.stroke }}>
+                                <div className="mb-10 flex justify-center pt-8">
                                     <div className="grid w-20 gap-1.5" aria-hidden>
                                         <span className="h-2 rounded-sm" style={{ background: theme.node.stroke }} />
                                         <span className="h-2 rounded-sm" style={{ background: theme.node.stroke }} />
