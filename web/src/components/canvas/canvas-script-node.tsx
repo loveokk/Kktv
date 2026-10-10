@@ -125,6 +125,8 @@ export function CanvasScriptNodeContent({
     onGenerateScript,
     onOpenScriptInput,
     onOpenCharacterInput,
+    onResize,
+    onTitleChange,
     onModelChange,
     onShotDurationChange,
     onShotCountChange,
@@ -157,6 +159,8 @@ export function CanvasScriptNodeContent({
     onGenerateScript: (prompt: string) => void;
     onOpenScriptInput?: () => void;
     onOpenCharacterInput?: () => void;
+    onResize?: (width: number, height: number) => void;
+    onTitleChange?: (title: string) => void;
     onModelChange: (model: string) => void;
     onShotDurationChange: (duration: StoryboardShotDuration) => void;
     onShotCountChange: (count: StoryboardShotCount) => void;
@@ -286,6 +290,59 @@ export function CanvasScriptNodeContent({
         reportedComposerHeightRef.current = composerHeight;
         composerHeightChangeRef.current(composerHeight);
     }, []);
+    useEffect(() => {
+        if (!hasContentRows) {
+            if (node.title !== "脚本生成器") onTitleChange?.("脚本生成器");
+            if (node.width !== 420 || node.height !== 420) onResize?.(420, 420);
+            return;
+        }
+        if (node.title !== "分镜脚本") onTitleChange?.("分镜脚本");
+        const nextWidth = Math.max(node.width, 800);
+        const nextHeight = Math.max(node.height, 420);
+        if (nextWidth !== node.width || nextHeight !== node.height) onResize?.(nextWidth, nextHeight);
+    }, [hasContentRows, node.height, node.title, node.width, onResize, onTitleChange]);
+
+
+    if (!hasContentRows) {
+        return (
+            <div className="relative flex h-full w-full flex-col items-center justify-center overflow-visible p-5" style={{ color: theme.node.text }} onDoubleClick={(event) => event.stopPropagation()}>
+                <section className="flex aspect-square h-full max-h-[420px] w-full max-w-[420px] flex-col rounded-[28px] border p-7" style={{ background: theme.node.panel, borderColor: theme.node.stroke }}>
+                    <div className="flex flex-1 items-center justify-center">
+                        <div className="grid w-20 gap-1.5" aria-hidden>
+                            <span className="h-2 rounded-sm" style={{ background: theme.node.stroke }} />
+                            <span className="h-2 rounded-sm" style={{ background: theme.node.stroke }} />
+                            <span className="h-2 rounded-sm" style={{ background: theme.node.stroke }} />
+                            <span className="h-2 w-2/3 rounded-sm" style={{ background: theme.node.stroke }} />
+                        </div>
+                    </div>
+                    <div className="mb-2 text-sm" style={{ color: theme.node.muted }}>尝试：</div>
+                    <div className="grid gap-3">
+                        {SCRIPT_BUILDER_MODES.map((mode) => {
+                            const Icon = mode.icon;
+                            return (
+                                <button
+                                    key={mode.id}
+                                    type="button"
+                                    className="flex h-10 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-medium outline-none transition hover:bg-white/[.06] focus-visible:ring-2"
+                                    style={{ color: theme.node.text, "--tw-ring-color": theme.accent.primary } as CSSProperties}
+                                    onMouseDown={(event) => event.stopPropagation()}
+                                    onClick={(event) => {
+                                        event.stopPropagation();
+                                        if (mode.id === "script") onOpenScriptInput?.();
+                                        else if (mode.id === "characters") onOpenCharacterInput?.();
+                                        else onOpen();
+                                    }}
+                                >
+                                    <Icon className="size-4 shrink-0" />
+                                    <span>{mode.label}</span>
+                                </button>
+                            );
+                        })}
+                    </div>
+                </section>
+            </div>
+        );
+    }
 
     return (
         <div className="relative flex h-full w-full flex-col overflow-visible" style={{ color: theme.node.text }} onDoubleClick={(event) => event.stopPropagation()}>

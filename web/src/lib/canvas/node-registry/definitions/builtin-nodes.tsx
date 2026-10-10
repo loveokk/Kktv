@@ -51,8 +51,8 @@ const BUILTIN_NODE_TRAITS = {
     [CanvasNodeType.Script]: {
         label: "分镜脚本",
         icon: <Clapperboard />,
-        // 分镜脚本的表格布局需要更宽的下限；高度仍由内容动态撑开（见 canvas-node.tsx）。
-        minSize: { width: 800, height: DEFAULT_MIN_SIZE.height },
+        // 空节点用于正方形脚本生成器；有内容时由组件自动扩展到表格宽度。
+        minSize: { width: 420, height: 420 },
         showInCreateMenu: true,
         generationMode: () => "text",
         inputKind: "text",

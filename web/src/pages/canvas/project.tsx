@@ -2286,6 +2286,8 @@ function InfiniteCanvasPage() {
                         onGenerateScript={(prompt) => void generateScriptRows(contentNode.id, prompt)}
                         onOpenScriptInput={() => createScriptTextInput(contentNode)}
                         onOpenCharacterInput={() => createScriptCharacterInput(contentNode)}
+                        onResize={(width, height) => handleNodeResize(contentNode.id, width, height)}
+                        onTitleChange={(title) => handleNodeTitleChange(contentNode.id, title)}
                         onModelChange={(model) => handleConfigNodeChange(contentNode.id, { model })}
                         onShotDurationChange={(duration: StoryboardShotDuration) => handleConfigNodeChange(contentNode.id, { storyboardShotDuration: duration })}
                         onShotCountChange={(count: StoryboardShotCount) => handleConfigNodeChange(contentNode.id, { storyboardShotCount: count })}
@@ -2351,6 +2353,7 @@ function InfiniteCanvasPage() {
             handleGenerateNode,
             handleRemoveNodeReference,
             handleNodeResize,
+            handleNodeTitleChange,
             handleUploadReferenceRequest,
             mentionReferencesByNodeId,
             mergeVideosByIds,
