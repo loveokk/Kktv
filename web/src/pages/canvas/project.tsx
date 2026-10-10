@@ -51,7 +51,7 @@ import { CanvasNodePromptPanel } from "@/components/canvas/canvas-node-prompt-pa
 import { CanvasToolbar } from "@/components/canvas/canvas-toolbar";
 import { useCanvasCreateCommands } from "@/components/canvas/use-canvas-create-commands";
 import { CanvasZoomControls } from "@/components/canvas/canvas-zoom-controls";
-import { CanvasScriptNodeContent } from "@/components/canvas/canvas-script-node";
+import { CanvasScriptNodeContent, scriptBuilderModePrompt } from "@/components/canvas/canvas-script-node";
 import { CanvasBatchTableNodeContent } from "@/components/canvas/canvas-batch-table-node";
 import { STORYBOARD_HEADER_HEIGHT, STORYBOARD_ROW_HEIGHT, storyboardMinNodeHeight, storyboardTableHeight } from "@/lib/canvas/canvas-storyboard-layout";
 import { CanvasDirectorNodePanel } from "@/components/canvas/director/canvas-director-node-panel";
@@ -2089,7 +2089,7 @@ function InfiniteCanvasPage() {
 
     const renderCanvasNodePanel = useCallback(
         (panelNode: CanvasNodeData) => {
-            if (panelNode.type === CanvasNodeType.Script || panelNode.type === CanvasNodeType.Drawing) return null;
+            if (panelNode.type === CanvasNodeType.Drawing) return null;
             return panelNode.type === CanvasNodeType.Config ? (
                 <CanvasConfigComposer
                     value={panelNode.metadata?.composerContent ?? panelNode.metadata?.prompt ?? ""}
@@ -2128,7 +2128,14 @@ function InfiniteCanvasPage() {
                     }}
                     onPromptChange={handleNodePromptChange}
                     onConfigChange={handleConfigNodeChange}
-                    onGenerate={handleGenerateNode}
+                    onGenerate={(nodeId, mode, prompt) => {
+                        if (panelNode.type === CanvasNodeType.Script) {
+                            const builderMode = panelNode.metadata?.storyboardBuilderMode || "script";
+                            void generateScriptRows(panelNode.id, scriptBuilderModePrompt(builderMode, prompt));
+                            return;
+                        }
+                        void handleGenerateNode(nodeId, mode, prompt);
+                    }}
                     onRemoveReference={handleRemoveNodeReference}
                     onReorderReferences={handleReorderNodeReferences}
                     onReplaceReference={handleReplaceNodeReference}
@@ -2239,6 +2246,7 @@ function InfiniteCanvasPage() {
                         onUpdateRow={(rowId, patch) => updateScriptRow(contentNode.id, rowId, patch)}
                         onPromptChange={(composerContent) => handleConfigNodeChange(contentNode.id, { composerContent })}
                         onGenerateScript={(prompt) => void generateScriptRows(contentNode.id, prompt)}
+                        onBuilderModeChange={(storyboardBuilderMode) => handleConfigNodeChange(contentNode.id, { storyboardBuilderMode })}
                         onModelChange={(model) => handleConfigNodeChange(contentNode.id, { model })}
                         onShotDurationChange={(duration: StoryboardShotDuration) => handleConfigNodeChange(contentNode.id, { storyboardShotDuration: duration })}
                         onShotCountChange={(count: StoryboardShotCount) => handleConfigNodeChange(contentNode.id, { storyboardShotCount: count })}

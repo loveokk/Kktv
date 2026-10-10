@@ -83,8 +83,7 @@ export function canOpenCanvasNodePromptPanel(node: CanvasNodeData | null | undef
         return canvasMediaNodeRole(node) === "generator"
             || (canvasMediaNodeOrigin(node) === "generated" && Boolean((node.metadata?.composerContent || node.metadata?.prompt)?.trim()));
     }
-    return node.type !== CanvasNodeType.Script
-        && node.type !== CanvasNodeType.Drawing
+    return node.type !== CanvasNodeType.Drawing
         && node.type !== CanvasNodeType.Panorama
         && node.type !== CanvasNodeType.Director
         && node.type !== "art-critique";

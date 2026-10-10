@@ -51,7 +51,7 @@ const SCRIPT_BUILDER_MODES: Array<{ id: ScriptBuilderMode; label: string; descri
     { id: "self", label: "自己编写分镜脚本", description: "按你的镜头顺序整理成可编辑分镜表。", icon: PencilLine },
 ];
 
-function builderModePrompt(mode: ScriptBuilderMode, prompt: string) {
+export function scriptBuilderModePrompt(mode: ScriptBuilderMode, prompt: string) {
     const instruction = mode === "script"
         ? "当前模式：剧本生成分镜脚本。请从下面剧本中提取角色、场景、关键道具和镜头，输出完整可编辑分镜表。"
         : mode === "characters"
@@ -123,6 +123,7 @@ export function CanvasScriptNodeContent({
     onUpdateRow,
     onPromptChange,
     onGenerateScript,
+    onBuilderModeChange,
     onModelChange,
     onShotDurationChange,
     onShotCountChange,
@@ -153,6 +154,7 @@ export function CanvasScriptNodeContent({
     onUpdateRow: (rowId: string, patch: Partial<StoryboardRow>) => void;
     onPromptChange: (prompt: string) => void;
     onGenerateScript: (prompt: string) => void;
+    onBuilderModeChange?: (mode: "script" | "characters" | "self") => void;
     onModelChange: (model: string) => void;
     onShotDurationChange: (duration: StoryboardShotDuration) => void;
     onShotCountChange: (count: StoryboardShotCount) => void;
@@ -167,7 +169,7 @@ export function CanvasScriptNodeContent({
     const simpleMode = workspaceMode === "simple";
     const rows = node.metadata?.storyboard?.rows || [];
     const [prompt, setPrompt] = useState(node.metadata?.composerContent || "");
-    const [builderMode, setBuilderMode] = useState<ScriptBuilderMode>("script");
+    const builderMode = (node.metadata?.storyboardBuilderMode as ScriptBuilderMode) || "script";
     const [composerOpen, setComposerOpen] = useState(false);
     const [scrollTop, setScrollTop] = useState(0);
     const composerHeightChangeRef = useRef(onComposerHeightChange);
@@ -248,7 +250,7 @@ export function CanvasScriptNodeContent({
     ];
     const submitPrompt = () => {
         const value = prompt.trim();
-        if (value && node.metadata?.status !== "loading") onGenerateScript(builderModePrompt(builderMode, value));
+        if (value && node.metadata?.status !== "loading") onGenerateScript(scriptBuilderModePrompt(builderMode, value));
     };
     useLayoutEffect(() => {
         composerHeightChangeRef.current = onComposerHeightChange;
@@ -355,8 +357,7 @@ export function CanvasScriptNodeContent({
                                 onMouseDown={(event) => event.stopPropagation()}
                                 onClick={(event) => {
                                     event.stopPropagation();
-                                    setBuilderMode(mode.id);
-                                    setComposerOpen(true);
+                                    onBuilderModeChange?.(mode.id);
                                 }}
                             >
                                 <Icon className="size-3.5 shrink-0" />

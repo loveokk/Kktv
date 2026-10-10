@@ -445,6 +445,7 @@ export type CanvasNodeMetadata = {
     storyboardShotDuration?: StoryboardShotDuration;
     storyboardShotCount?: StoryboardShotCount;
     storyboardVideoInputMode?: StoryboardVideoInputMode;
+    storyboardBuilderMode?: "script" | "characters" | "self";
     storyboardComposerHeight?: number;
     generationBatches?: CanvasGenerationBatch[];
     batchTable?: CanvasBatchTableData;
