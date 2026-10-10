@@ -168,11 +168,12 @@ export function CanvasScriptNodeContent({
     const rows = node.metadata?.storyboard?.rows || [];
     const [prompt, setPrompt] = useState(node.metadata?.composerContent || "");
     const [builderMode, setBuilderMode] = useState<ScriptBuilderMode>("script");
+    const [composerOpen, setComposerOpen] = useState(false);
     const [scrollTop, setScrollTop] = useState(0);
     const composerHeightChangeRef = useRef(onComposerHeightChange);
     const reportedComposerHeightRef = useRef<number | null>(null);
     const composerHeight = node.metadata?.storyboardComposerHeight || STORYBOARD_COMPOSER_MIN_HEIGHT;
-    const tableHeight = storyboardTableHeight(node.height, composerHeight);
+    const tableHeight = storyboardTableHeight(node.height, 0);
     const totalDuration = rows.reduce((sum, row) => sum + (Number(row.durationSeconds) || 0), 0);
     const shotDuration = node.metadata?.storyboardShotDuration || "auto";
     const shotCount = node.metadata?.storyboardShotCount || "auto";
@@ -334,6 +335,38 @@ export function CanvasScriptNodeContent({
                 </Modal>
             ) : null}
             <StoryboardMiniPipeline pipeline={pipeline} theme={theme} rows={rows} />
+            <div className="shrink-0 border-t border-b px-3 py-2" style={{ borderColor: theme.node.stroke, background: theme.node.panel }}>
+                <div className="flex flex-wrap items-center gap-2">
+                    <span className="mr-1 text-[var(--fs-label)] font-semibold" style={{ color: theme.node.muted }}>生成方式</span>
+                    {SCRIPT_BUILDER_MODES.map((mode) => {
+                        const Icon = mode.icon;
+                        const selected = builderMode === mode.id;
+                        return (
+                            <button
+                                key={mode.id}
+                                type="button"
+                                className="inline-flex h-8 min-w-0 items-center gap-1.5 rounded-full border px-3 text-xs font-medium outline-none transition hover:brightness-105 focus-visible:ring-2"
+                                style={{
+                                    borderColor: selected ? theme.accent.primary : theme.node.stroke,
+                                    background: selected ? `${theme.accent.primary}18` : theme.node.fill,
+                                    color: selected ? theme.accent.primary : theme.node.text,
+                                    "--tw-ring-color": theme.accent.primary,
+                                } as CSSProperties}
+                                onMouseDown={(event) => event.stopPropagation()}
+                                onClick={(event) => {
+                                    event.stopPropagation();
+                                    setBuilderMode(mode.id);
+                                    setComposerOpen(true);
+                                }}
+                            >
+                                <Icon className="size-3.5 shrink-0" />
+                                <span className="truncate">{mode.label}</span>
+                                {selected ? <Check className="size-3 shrink-0" /> : null}
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
             <div className="storyboard-header-gutter grid h-9 shrink-0 items-center border-b text-xs font-semibold" style={{ borderColor: theme.node.stroke, color: theme.node.muted, gridTemplateColumns: SCRIPT_GRID_TEMPLATE }}>
                 <HeaderCell borderColor={theme.node.stroke} align="center">
                     序号
@@ -406,44 +439,22 @@ export function CanvasScriptNodeContent({
                         <span className="flex flex-col items-center gap-2.5">
                             <span className="text-sm font-bold">＋ 添加第一个镜头</span>
                             <span className="text-[var(--fs-label)] font-medium" style={{ color: theme.node.faint }}>
-                                也可在下方选择生成方式，描述剧情后一键生成分镜表
+                                先在上方选择生成方式，再描述剧情一键生成分镜表
                             </span>
                         </span>
                     </button>
                 )}
             </div>
-            <div className="shrink-0 border-t border-b px-3 py-2" style={{ borderColor: theme.node.stroke, background: theme.node.panel }}>
-                <div className="flex flex-wrap items-center gap-2">
-                    <span className="mr-1 text-[var(--fs-label)] font-semibold" style={{ color: theme.node.muted }}>生成方式</span>
-                    {SCRIPT_BUILDER_MODES.map((mode) => {
-                        const Icon = mode.icon;
-                        const selected = builderMode === mode.id;
-                        return (
-                            <button
-                                key={mode.id}
-                                type="button"
-                                className="inline-flex h-8 min-w-0 items-center gap-1.5 rounded-full border px-3 text-xs font-medium outline-none transition hover:brightness-105 focus-visible:ring-2"
-                                style={{
-                                    borderColor: selected ? theme.accent.primary : theme.node.stroke,
-                                    background: selected ? `${theme.accent.primary}18` : theme.node.fill,
-                                    color: selected ? theme.accent.primary : theme.node.text,
-                                    "--tw-ring-color": theme.accent.primary,
-                                } as CSSProperties}
-                                onMouseDown={(event) => event.stopPropagation()}
-                                onClick={(event) => {
-                                    event.stopPropagation();
-                                    setBuilderMode(mode.id);
-                                }}
-                            >
-                                <Icon className="size-3.5 shrink-0" />
-                                <span className="truncate">{mode.label}</span>
-                                {selected ? <Check className="size-3 shrink-0" /> : null}
-                            </button>
-                        );
-                    })}
-                </div>
-            </div>
-            <div className="relative grid shrink-0 grid-rows-[minmax(0,1fr)_28px] gap-1.5 rounded-b-[17px] p-2.5" style={{ height: composerHeight, background: theme.node.panel }}>
+            <Modal
+                open={composerOpen}
+                onCancel={() => setComposerOpen(false)}
+                footer={null}
+                width={720}
+                centered
+                destroyOnHidden
+                title="脚本生成器"
+            >
+                <div className="relative grid grid-rows-[minmax(0,1fr)_28px] gap-2 rounded-2xl p-3" style={{ minHeight: 180, background: theme.node.panel }}>
                 <CanvasResourceMentionTextarea
                     rows={1}
                     references={mentionReferences}
@@ -540,8 +551,8 @@ export function CanvasScriptNodeContent({
                         onClick={submitPrompt}
                     />
                 </div>
-                <RowHandle side="left" top={composerHeight / 2} scale={scale} tone="idle" theme={theme} title="连接文本节点作为项目设定" onPointerDown={(event) => onConnectStart(event, "context", "target")} />
-            </div>
+            </Modal>
+            <RowHandle side="left" top={STORYBOARD_HEADER_HEIGHT + 24} scale={scale} tone="idle" theme={theme} title="连接文本节点作为项目设定" onPointerDown={(event) => onConnectStart(event, "context", "target")} />
             {rows.map((row, index) => {
                 const top = STORYBOARD_HEADER_HEIGHT + index * STORYBOARD_ROW_HEIGHT + STORYBOARD_ROW_HEIGHT / 2 - scrollTop;
                 if (top < STORYBOARD_HEADER_HEIGHT + 4 || top > STORYBOARD_HEADER_HEIGHT + tableHeight - 4) return null;
