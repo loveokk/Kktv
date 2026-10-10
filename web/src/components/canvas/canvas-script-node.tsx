@@ -123,7 +123,8 @@ export function CanvasScriptNodeContent({
     onUpdateRow,
     onPromptChange,
     onGenerateScript,
-    onBuilderModeChange,
+    onOpenScriptInput,
+    onOpenCharacterInput,
     onModelChange,
     onShotDurationChange,
     onShotCountChange,
@@ -154,7 +155,8 @@ export function CanvasScriptNodeContent({
     onUpdateRow: (rowId: string, patch: Partial<StoryboardRow>) => void;
     onPromptChange: (prompt: string) => void;
     onGenerateScript: (prompt: string) => void;
-    onBuilderModeChange?: (mode: "script" | "characters" | "self") => void;
+    onOpenScriptInput?: () => void;
+    onOpenCharacterInput?: () => void;
     onModelChange: (model: string) => void;
     onShotDurationChange: (duration: StoryboardShotDuration) => void;
     onShotCountChange: (count: StoryboardShotCount) => void;
@@ -170,6 +172,7 @@ export function CanvasScriptNodeContent({
     const rows = node.metadata?.storyboard?.rows || [];
     const [prompt, setPrompt] = useState(node.metadata?.composerContent || "");
     const builderMode = (node.metadata?.storyboardBuilderMode as ScriptBuilderMode) || "script";
+    const [builderMenuOpen, setBuilderMenuOpen] = useState(false);
     const [composerOpen, setComposerOpen] = useState(false);
     const [scrollTop, setScrollTop] = useState(0);
     const composerHeightChangeRef = useRef(onComposerHeightChange);
@@ -282,6 +285,44 @@ export function CanvasScriptNodeContent({
                 <span className="text-[var(--fs-caption)] font-semibold tabular-nums" style={{ color: theme.node.muted }}>
                     {rows.length} 镜 · {totalDuration}s
                 </span>
+                <Popover
+                    open={builderMenuOpen}
+                    onOpenChange={setBuilderMenuOpen}
+                    trigger="click"
+                    placement="bottomRight"
+                    content={
+                        <div className="grid w-64 gap-2">
+                            {SCRIPT_BUILDER_MODES.map((mode) => {
+                                const Icon = mode.icon;
+                                return (
+                                    <button
+                                        key={mode.id}
+                                        type="button"
+                                        className="flex items-start gap-2 rounded-xl border px-3 py-2 text-left transition hover:brightness-105"
+                                        style={{ borderColor: theme.node.stroke, background: theme.node.fill, color: theme.node.text }}
+                                        onClick={() => {
+                                            setBuilderMenuOpen(false);
+                                            if (mode.id === "script") onOpenScriptInput?.();
+                                            else if (mode.id === "characters") onOpenCharacterInput?.();
+                                            else onOpen();
+                                        }}
+                                    >
+                                        <Icon className="mt-0.5 size-3.5 shrink-0" />
+                                        <span className="min-w-0">
+                                            <span className="block text-xs font-semibold">{mode.label}</span>
+                                            <span className="mt-0.5 block text-[var(--fs-label)]" style={{ color: theme.node.muted }}>{mode.description}</span>
+                                        </span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    }
+                >
+                    <Button size="small" type="text" icon={<FileText className="size-3.5" />} style={{ color: theme.node.muted }}>
+                        生成方式
+                        <ChevronDown className="size-3" />
+                    </Button>
+                </Popover>
                 <Tooltip title="添加镜头">
                     <button
                         type="button"
@@ -337,37 +378,6 @@ export function CanvasScriptNodeContent({
                 </Modal>
             ) : null}
             <StoryboardMiniPipeline pipeline={pipeline} theme={theme} rows={rows} />
-            <div className="shrink-0 border-t border-b px-3 py-2" style={{ borderColor: theme.node.stroke, background: theme.node.panel }}>
-                <div className="flex flex-wrap items-center gap-2">
-                    <span className="mr-1 text-[var(--fs-label)] font-semibold" style={{ color: theme.node.muted }}>生成方式</span>
-                    {SCRIPT_BUILDER_MODES.map((mode) => {
-                        const Icon = mode.icon;
-                        const selected = builderMode === mode.id;
-                        return (
-                            <button
-                                key={mode.id}
-                                type="button"
-                                className="inline-flex h-8 min-w-0 items-center gap-1.5 rounded-full border px-3 text-xs font-medium outline-none transition hover:brightness-105 focus-visible:ring-2"
-                                style={{
-                                    borderColor: selected ? theme.accent.primary : theme.node.stroke,
-                                    background: selected ? `${theme.accent.primary}18` : theme.node.fill,
-                                    color: selected ? theme.accent.primary : theme.node.text,
-                                    "--tw-ring-color": theme.accent.primary,
-                                } as CSSProperties}
-                                onMouseDown={(event) => event.stopPropagation()}
-                                onClick={(event) => {
-                                    event.stopPropagation();
-                                    onBuilderModeChange?.(mode.id);
-                                }}
-                            >
-                                <Icon className="size-3.5 shrink-0" />
-                                <span className="truncate">{mode.label}</span>
-                                {selected ? <Check className="size-3 shrink-0" /> : null}
-                            </button>
-                        );
-                    })}
-                </div>
-            </div>
             <div className="storyboard-header-gutter grid h-9 shrink-0 items-center border-b text-xs font-semibold" style={{ borderColor: theme.node.stroke, color: theme.node.muted, gridTemplateColumns: SCRIPT_GRID_TEMPLATE }}>
                 <HeaderCell borderColor={theme.node.stroke} align="center">
                     序号
@@ -440,7 +450,7 @@ export function CanvasScriptNodeContent({
                         <span className="flex flex-col items-center gap-2.5">
                             <span className="text-sm font-bold">＋ 添加第一个镜头</span>
                             <span className="text-[var(--fs-label)] font-medium" style={{ color: theme.node.faint }}>
-                                先在上方选择生成方式，再描述剧情一键生成分镜表
+                                点击顶部“生成方式”选择生成流程
                             </span>
                         </span>
                     </button>

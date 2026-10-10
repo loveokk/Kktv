@@ -51,7 +51,7 @@ import { CanvasNodePromptPanel } from "@/components/canvas/canvas-node-prompt-pa
 import { CanvasToolbar } from "@/components/canvas/canvas-toolbar";
 import { useCanvasCreateCommands } from "@/components/canvas/use-canvas-create-commands";
 import { CanvasZoomControls } from "@/components/canvas/canvas-zoom-controls";
-import { CanvasScriptNodeContent, scriptBuilderModePrompt } from "@/components/canvas/canvas-script-node";
+import { CanvasScriptNodeContent } from "@/components/canvas/canvas-script-node";
 import { CanvasBatchTableNodeContent } from "@/components/canvas/canvas-batch-table-node";
 import { STORYBOARD_HEADER_HEIGHT, STORYBOARD_ROW_HEIGHT, storyboardMinNodeHeight, storyboardTableHeight } from "@/lib/canvas/canvas-storyboard-layout";
 import { CanvasDirectorNodePanel } from "@/components/canvas/director/canvas-director-node-panel";
@@ -2087,6 +2087,49 @@ function InfiniteCanvasPage() {
         [closeConnectionCreateMenu],
     );
 
+    const createScriptTextInput = useCallback((scriptNode: CanvasNodeData) => {
+        const textNode = createCanvasNode(CanvasNodeType.Text, { x: scriptNode.position.x - 520, y: scriptNode.position.y }, {
+            content: "",
+            workflowKind: "story_input",
+            workflowTitle: "剧本输入",
+            workflowDescription: "输入剧本、故事梗概或角色设定",
+            fontSize: 14,
+        });
+        textNode.title = "剧本输入";
+        textNode.width = 460;
+        textNode.height = 320;
+        const nextNodes = [...nodesRef.current, textNode];
+        const nextConnections = [...connectionsRef.current, { id: nanoid(), fromNodeId: textNode.id, toNodeId: scriptNode.id, toHandleId: "storyboard:context" }];
+        nodesRef.current = nextNodes;
+        connectionsRef.current = nextConnections;
+        setNodes(nextNodes);
+        setConnections(nextConnections);
+        focusCanvasNode(textNode.id);
+        queueMicrotask(() => openTextNodeEditor(textNode));
+    }, [connectionsRef, focusCanvasNode, nodesRef, openTextNodeEditor, setConnections, setNodes]);
+
+    const createScriptCharacterInput = useCallback((scriptNode: CanvasNodeData) => {
+        const characterNode = createCanvasNode(CanvasNodeType.Image, { x: scriptNode.position.x - 600, y: scriptNode.position.y + 380 }, {
+            prompt: "角色设定图：正面、侧面、背面三视图，统一服装、发型和配饰，白色背景，无文字无水印。",
+            generationMode: "image",
+            workflowKind: "character",
+            workflowTitle: "角色设定",
+            workflowDescription: "生成角色三视图与角色参考图",
+            status: "idle",
+        });
+        characterNode.title = "角色设定";
+        characterNode.width = 520;
+        characterNode.height = 360;
+        const nextNodes = [...nodesRef.current, characterNode];
+        const nextConnections = [...connectionsRef.current, { id: nanoid(), fromNodeId: characterNode.id, toNodeId: scriptNode.id, toHandleId: "storyboard:context" }];
+        nodesRef.current = nextNodes;
+        connectionsRef.current = nextConnections;
+        setNodes(nextNodes);
+        setConnections(nextConnections);
+        focusCanvasNode(characterNode.id);
+        setDialogNodeId(characterNode.id);
+    }, [connectionsRef, focusCanvasNode, nodesRef, setConnections, setDialogNodeId, setNodes]);
+
     const renderCanvasNodePanel = useCallback(
         (panelNode: CanvasNodeData) => {
             if (panelNode.type === CanvasNodeType.Drawing) return null;
@@ -2128,14 +2171,7 @@ function InfiniteCanvasPage() {
                     }}
                     onPromptChange={handleNodePromptChange}
                     onConfigChange={handleConfigNodeChange}
-                    onGenerate={(nodeId, mode, prompt) => {
-                        if (panelNode.type === CanvasNodeType.Script) {
-                            const builderMode = panelNode.metadata?.storyboardBuilderMode || "script";
-                            void generateScriptRows(panelNode.id, scriptBuilderModePrompt(builderMode, prompt));
-                            return;
-                        }
-                        void handleGenerateNode(nodeId, mode, prompt);
-                    }}
+                    onGenerate={handleGenerateNode}
                     onRemoveReference={handleRemoveNodeReference}
                     onReorderReferences={handleReorderNodeReferences}
                     onReplaceReference={handleReplaceNodeReference}
@@ -2152,6 +2188,8 @@ function InfiniteCanvasPage() {
         },
         [
             configInputsById,
+            createScriptCharacterInput,
+            createScriptTextInput,
             handleConfigNodeChange,
             handleGenerateNode,
             handleNodePromptChange,
@@ -2246,7 +2284,8 @@ function InfiniteCanvasPage() {
                         onUpdateRow={(rowId, patch) => updateScriptRow(contentNode.id, rowId, patch)}
                         onPromptChange={(composerContent) => handleConfigNodeChange(contentNode.id, { composerContent })}
                         onGenerateScript={(prompt) => void generateScriptRows(contentNode.id, prompt)}
-                        onBuilderModeChange={(storyboardBuilderMode) => handleConfigNodeChange(contentNode.id, { storyboardBuilderMode })}
+                        onOpenScriptInput={() => createScriptTextInput(contentNode)}
+                        onOpenCharacterInput={() => createScriptCharacterInput(contentNode)}
                         onModelChange={(model) => handleConfigNodeChange(contentNode.id, { model })}
                         onShotDurationChange={(duration: StoryboardShotDuration) => handleConfigNodeChange(contentNode.id, { storyboardShotDuration: duration })}
                         onShotCountChange={(count: StoryboardShotCount) => handleConfigNodeChange(contentNode.id, { storyboardShotCount: count })}
