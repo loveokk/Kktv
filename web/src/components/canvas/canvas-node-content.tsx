@@ -23,6 +23,8 @@ import { resolveMediaUrl } from "@/services/file-storage";
 import { resolveImageUrl } from "@/services/image-storage";
 import { acquireCanvasVideoPreview, canvasDerivedPreviewSourceKey, canvasVideoPreviewNeedsHydration } from "@/services/canvas-video-preview";
 import { getActiveUserScopeEpoch, subscribeUserScope } from "@/lib/user-scope";
+import { useCanvasStore } from "@/stores/canvas/use-canvas-store";
+import { repairCanvasSaveState } from "@/services/local-workspace-repository";
 import { CanvasNodeType, type CanvasNodeData } from "@/types/canvas";
 import { getNodeDefinition } from "@/lib/canvas/node-registry";
 import { ART_CRITIQUE_NODE_TYPE } from "@/lib/art-critique/contracts";
@@ -295,7 +297,14 @@ function shortTaskId(id: string) {
 }
 
 function ErrorContent({ node, theme, onRetry, onReloadResource, onOpenTaskDetails }: Pick<CanvasNodeContentProps, "node" | "theme" | "onRetry" | "onReloadResource" | "onOpenTaskDetails">) {
+    const canvasProjectId = useCanvasStore((state) => state.projects.find((project) => project.nodes.some((item) => item.id === node.id))?.id);
     const explanation = explainGenerationError({ code: node.metadata?.generationErrorCode || node.metadata?.taskErrorCode, message: node.metadata?.errorDetails }, { taskId: node.metadata?.taskId, model: node.metadata?.model, createdAt: node.metadata?.taskCreatedAt, stage: node.metadata?.taskStage });
+    const repairSave = canvasProjectId && explanation.reason.includes("画布尚未保存")
+        ? async () => {
+              await repairCanvasSaveState(canvasProjectId);
+              onRetry?.(node);
+          }
+        : undefined;
     const errorDisplayTask = {
         provider: node.metadata?.taskProvider,
         status: (node.metadata?.taskStatus || "failed") as GenerationTask["status"],
@@ -323,6 +332,7 @@ function ErrorContent({ node, theme, onRetry, onReloadResource, onOpenTaskDetail
                     explanation={explanation}
                     context={{ taskId: node.metadata?.taskId, model: node.metadata?.model, createdAt: node.metadata?.taskCreatedAt, stage: node.metadata?.taskStage, providerRequestId: node.metadata?.taskProviderRequestId, failureDiagnostics: node.metadata?.taskFailureDiagnostics, errorSummary: node.metadata?.generationErrorSummary, completedAt: node.metadata?.taskCompletedAt, updatedAt: node.metadata?.taskUpdatedAt }}
                     onOpenDetails={node.metadata?.taskId && onOpenTaskDetails ? () => onOpenTaskDetails(node) : undefined}
+                    onRepairSave={repairSave ? () => { void repairSave().catch(() => undefined); } : undefined}
                     onRetry={submissionUncertain || explanation.uncertain || explanation.category === "download_failed" ? undefined : onRetry ? () => onRetry(node) : undefined}
                     retryLabel={node.metadata?.isBatchRoot ? "重新生成失败项" : "重新生成"}
                 />

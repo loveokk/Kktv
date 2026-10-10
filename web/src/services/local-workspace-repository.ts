@@ -716,6 +716,26 @@ export async function persistCanvasDocument(id: string, patch: CanvasDocumentPer
     }
 }
 
+/**
+ * Recover a local draft whose revision no longer matches the backend record.
+ * This is intentionally explicit: it treats the current local document as a
+ * new server record and lets the normal save path create revision 1.
+ */
+export async function repairCanvasSaveState(id: string) {
+    const expected = captureUserScope();
+    const scope = expected.userScope;
+    assertDispatchGuard(expected);
+    await clearCanvasOperationJournal(id, scope);
+    await clearCanvasPendingProjection(id, scope);
+    clearCanvasExternalRevisionConflict(scope, id);
+    clearCanvasDocumentBase(scope, id);
+    useCanvasStore.setState((state) => ({
+        projects: state.projects.map((project) => project.id === id ? { ...project, revision: 0 } : project),
+    }));
+    await flushCanvasStorePersistence().catch(() => undefined);
+    await syncLocalCanvasProject(id, false, expected);
+}
+
 /** Timeline edits live on the canvas document. */
 export async function persistCanvasTimeline(id: string, timeline: NonNullable<CanvasProject["timeline"]>) {
     await persistCanvasDocument(id, { timeline });

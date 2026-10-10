@@ -1,4 +1,4 @@
-import { Copy, Eye, RefreshCw } from "lucide-react";
+import { Copy, Eye, RefreshCw, Wrench } from "lucide-react";
 import { useState } from "react";
 
 import { formatGenerationDiagnostics, type GenerationFailureContext, type GenerationFailureExplanation } from "@/lib/generation-error";
@@ -10,10 +10,11 @@ type GenerationFailureNoticeProps = {
     onRetry?: () => void;
     retryLabel?: string;
     onOpenDetails?: () => void;
+    onRepairSave?: () => void;
     retryDisabled?: boolean;
 };
 
-export function GenerationFailureNotice({ explanation, context, compact, onRetry, retryLabel, onOpenDetails, retryDisabled }: GenerationFailureNoticeProps) {
+export function GenerationFailureNotice({ explanation, context, compact, onRetry, retryLabel, onOpenDetails, onRepairSave, retryDisabled }: GenerationFailureNoticeProps) {
     const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
     const diagnostics = formatGenerationDiagnostics(explanation, context);
     const showRetry = Boolean(onRetry) && !explanation.blockAutomaticRetry && !retryDisabled;
@@ -49,6 +50,20 @@ export function GenerationFailureNotice({ explanation, context, compact, onRetry
                     >
                         <Eye className="size-3.5" />
                         {explanation.uncertain ? "查看原任务" : "查看详情"}
+                    </button>
+                ) : null}
+                {onRepairSave ? (
+                    <button
+                        type="button"
+                        className="generation-failure-button"
+                        onClick={(event) => {
+                            event.stopPropagation();
+                            onRepairSave();
+                        }}
+                        onMouseDown={(event) => event.stopPropagation()}
+                    >
+                        <Wrench className="size-3.5" />
+                        修复画布并重试
                     </button>
                 ) : null}
                 {diagnostics ? (
