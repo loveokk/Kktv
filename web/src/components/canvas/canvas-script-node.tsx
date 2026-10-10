@@ -179,6 +179,24 @@ export function CanvasScriptNodeContent({
     const composerHeight = node.metadata?.storyboardComposerHeight || STORYBOARD_COMPOSER_MIN_HEIGHT;
     const tableHeight = storyboardTableHeight(node.height, 0);
     const totalDuration = rows.reduce((sum, row) => sum + (Number(row.durationSeconds) || 0), 0);
+    const hasContentRows = rows.some((row) =>
+        [
+            row.plotDescription,
+            row.videoMotionPrompt,
+            row.dialogue,
+            row.imageGenerationPrompt,
+            row.narrativeIntent,
+            row.viewerPOV,
+            row.performanceBlocking,
+            row.lightingAndAtmosphere,
+            row.audioEffects,
+            row.camera,
+            row.motion,
+            row.timeBeats,
+            row.negativePrompt,
+            row.continuityOut,
+        ].some((value) => String(value || "").trim()) || Boolean(row.assetBindings?.length),
+    );
     const shotDuration = node.metadata?.storyboardShotDuration || "auto";
     const shotCount = node.metadata?.storyboardShotCount || "auto";
     const videoInputMode = node.metadata?.storyboardVideoInputMode || "direct";
@@ -208,7 +226,7 @@ export function CanvasScriptNodeContent({
               : "";
     const [batchDetailsOpen, setBatchDetailsOpen] = useState(false);
     const [moreMenuOpen, setMoreMenuOpen] = useState(false);
-    const pipelineDisabled = !rows.length || node.metadata?.status === "loading" || hasActiveBatchItems;
+    const pipelineDisabled = !hasContentRows || node.metadata?.status === "loading" || hasActiveBatchItems;
     const missingImages = Math.max(0, pipeline.images.total - pipeline.images.created);
     const missingVideos = Math.max(0, pipeline.videos.total - pipeline.videos.created);
     const canMerge = pipeline.successfulVideoNodeIds.length >= 2 && pipeline.final.success === 0;
@@ -286,7 +304,7 @@ export function CanvasScriptNodeContent({
                     </span>
                 ) : null}
                 <span className="text-[var(--fs-caption)] font-semibold tabular-nums" style={{ color: theme.node.muted }}>
-                    {rows.length} 镜 · {totalDuration}s
+                    {hasContentRows ? `${rows.length} 镜 · ${totalDuration}s` : "待生成"}
                 </span>
                 <Tooltip title="添加镜头">
                     <button
@@ -343,7 +361,7 @@ export function CanvasScriptNodeContent({
                 </Modal>
             ) : null}
             <StoryboardMiniPipeline pipeline={pipeline} theme={theme} rows={rows} />
-            <div className="storyboard-header-gutter grid h-9 shrink-0 items-center border-b text-xs font-semibold" style={{ borderColor: theme.node.stroke, color: theme.node.muted, gridTemplateColumns: SCRIPT_GRID_TEMPLATE }}>
+            {hasContentRows ? <div className="storyboard-header-gutter grid h-9 shrink-0 items-center border-b text-xs font-semibold" style={{ borderColor: theme.node.stroke, color: theme.node.muted, gridTemplateColumns: SCRIPT_GRID_TEMPLATE }}>
                 <HeaderCell borderColor={theme.node.stroke} align="center">
                     序号
                 </HeaderCell>
@@ -351,7 +369,7 @@ export function CanvasScriptNodeContent({
                 <HeaderCell borderColor={theme.node.stroke}>视频提示词</HeaderCell>
                 <HeaderCell borderColor={theme.node.stroke}>台词/旁白</HeaderCell>
                 <span className="px-3">关联资产</span>
-            </div>
+            </div> : null}
             <div
                 data-canvas-wheel-scroll
                 tabIndex={0}
@@ -366,7 +384,7 @@ export function CanvasScriptNodeContent({
                 }}
                 onWheel={(event) => event.stopPropagation()}
             >
-                {rows.length ? (
+                {hasContentRows ? (
                     rows.map((row) => (
                         <div key={row.id} className="relative grid border-b" style={{ height: STORYBOARD_ROW_HEIGHT, borderColor: theme.node.stroke, gridTemplateColumns: SCRIPT_GRID_TEMPLATE }}>
                             <div className="flex flex-col items-center justify-center gap-0.5 border-r tabular-nums" style={{ color: theme.node.muted, borderColor: theme.node.stroke }}>
