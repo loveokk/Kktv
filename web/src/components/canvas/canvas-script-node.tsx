@@ -214,6 +214,10 @@ export function CanvasScriptNodeContent({
     const canMerge = pipeline.successfulVideoNodeIds.length >= 2 && pipeline.final.success === 0;
     const allRowIds = pipeline.rows.map((item) => item.row.id);
     const moreMenuItems: MenuProps["items"] = [
+        { key: "script-input", icon: <FileText className="size-3.5" />, label: "剧本生成分镜脚本", onClick: () => onOpenScriptInput?.() },
+        { key: "character-input", icon: <UserRound className="size-3.5" />, label: "角色生成分镜脚本", onClick: () => onOpenCharacterInput?.() },
+        { key: "write-storyboard", icon: <PencilLine className="size-3.5" />, label: "自己编写分镜脚本", onClick: () => onOpen() },
+        { type: "divider" },
         { key: "generate-images", icon: <ImageIcon className="size-3.5" />, label: "生成未完成分镜图", disabled: pipelineDisabled || pipeline.images.incomplete === 0, onClick: () => onGenerateImages(allRowIds) },
         { key: "generate-videos", icon: <Video className="size-3.5" />, label: "生成未完成视频", disabled: pipelineDisabled || pipeline.videos.incomplete === 0, onClick: () => onGenerateVideos(allRowIds) },
         {
