@@ -5,7 +5,7 @@ import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, use
 import { CheckboxGroup } from "@/components/ui/base/checkbox";
 import type { MenuProps } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { ChevronDown, ChevronUp, Clapperboard, Copy, Expand, Film, Grid3X3, Image as ImageIcon, ListTree, Merge, MoreHorizontal, Plus, RefreshCw, Send, Square, Trash2, Video } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, Clapperboard, Copy, Expand, FileText, Film, Grid3X3, Image as ImageIcon, ListTree, Merge, MoreHorizontal, PencilLine, Plus, RefreshCw, Send, Square, Trash2, UserRound, Video } from "lucide-react";
 
 import { CanvasResourceMentionTextarea } from "@/components/canvas/canvas-resource-mention-textarea";
 import { StoryboardAssetsCell } from "@/components/canvas/storyboard-assets-cell";
@@ -43,6 +43,31 @@ const EMPTY_STORYBOARD_ROWS: StoryboardRow[] = [];
 const DEFAULT_STORYBOARD_COLUMNS: StoryboardColumn[] = ["shotNumber", "durationSeconds", "videoMotionPrompt", "dialogue", "assets"];
 const LEGACY_STORYBOARD_COLUMNS: StoryboardColumn[] = ["shotNumber", "durationSeconds", "plotDescription", "dialogue"];
 const PREVIOUS_DEFAULT_STORYBOARD_COLUMNS: StoryboardColumn[] = ["shotNumber", "plotDescription", "videoMotionPrompt", "dialogue"];
+type ScriptBuilderMode = "script" | "characters" | "self";
+
+const SCRIPT_BUILDER_MODES: Array<{ id: ScriptBuilderMode; label: string; description: string; icon: typeof FileText }> = [
+    { id: "script", label: "剧本生成分镜脚本", description: "粘贴完整剧本，自动拆分角色、场景和镜头。", icon: FileText },
+    { id: "characters", label: "角色生成分镜脚本", description: "先写角色设定，再围绕角色关系生成分镜。", icon: UserRound },
+    { id: "self", label: "自己编写分镜脚本", description: "按你的镜头顺序整理成可编辑分镜表。", icon: PencilLine },
+];
+
+function builderModePrompt(mode: ScriptBuilderMode, prompt: string) {
+    const instruction = mode === "script"
+        ? "当前模式：剧本生成分镜脚本。请从下面剧本中提取角色、场景、关键道具和镜头，输出完整可编辑分镜表。"
+        : mode === "characters"
+            ? "当前模式：角色生成分镜脚本。请先根据下面角色设定整理角色资产、角色参考图提示词和连续性锁，再生成角色相关的分镜表。"
+            : "当前模式：自己编写分镜脚本。严格保留用户给出的镜头顺序、内容和动作，只做结构化整理，不要擅自改剧情。";
+    return `${instruction}
+
+【用户输入】
+${prompt.trim()}`;
+}
+
+function builderModePlaceholder(mode: ScriptBuilderMode) {
+    if (mode === "characters") return "描述角色设定、人物关系、服装和关键道具，为你生成角色分镜脚本";
+    if (mode === "self") return "直接描述你的镜头顺序和内容，为你整理成可编辑分镜脚本";
+    return "描述剧情片段、故事或粘贴剧本，为你生成分镜脚本";
+}
 
 function resolveStoryboardVisibleColumns(columns?: StoryboardColumn[]) {
     const isLegacyDefault = columns?.length === LEGACY_STORYBOARD_COLUMNS.length && LEGACY_STORYBOARD_COLUMNS.every((column) => columns.includes(column));
@@ -142,6 +167,7 @@ export function CanvasScriptNodeContent({
     const simpleMode = workspaceMode === "simple";
     const rows = node.metadata?.storyboard?.rows || [];
     const [prompt, setPrompt] = useState(node.metadata?.composerContent || "");
+    const [builderMode, setBuilderMode] = useState<ScriptBuilderMode>("script");
     const [scrollTop, setScrollTop] = useState(0);
     const composerHeightChangeRef = useRef(onComposerHeightChange);
     const reportedComposerHeightRef = useRef<number | null>(null);
@@ -221,7 +247,7 @@ export function CanvasScriptNodeContent({
     ];
     const submitPrompt = () => {
         const value = prompt.trim();
-        if (value && node.metadata?.status !== "loading") onGenerateScript(value);
+        if (value && node.metadata?.status !== "loading") onGenerateScript(builderModePrompt(builderMode, value));
     };
     useLayoutEffect(() => {
         composerHeightChangeRef.current = onComposerHeightChange;
@@ -352,39 +378,68 @@ export function CanvasScriptNodeContent({
                         </div>
                     ))
                 ) : (
+                    <div className="grid h-full min-h-44 w-full place-items-center px-4 py-5">
+                        <section
+                            className="w-full max-w-[560px] rounded-[28px] border p-4 shadow-sm"
+                            style={{ background: theme.node.panel, borderColor: theme.node.stroke, color: theme.node.text }}
+                            onMouseDown={(event) => event.stopPropagation()}
+                        >
+                            <div className="mb-4 flex items-center gap-2">
+                                <FileText className="size-4" style={{ color: theme.node.muted }} />
+                                <span className="text-sm font-semibold">脚本生成器</span>
+                            </div>
+                            <div className="grid gap-2">
+                                {SCRIPT_BUILDER_MODES.map((mode) => {
+                                    const Icon = mode.icon;
+                                    const selected = builderMode === mode.id;
+                                    return (
+                                        <button
+                                            key={mode.id}
+                                            type="button"
+                                            className="flex min-h-14 w-full items-center gap-3 rounded-2xl border px-4 text-left outline-none transition hover:-translate-y-0.5 hover:brightness-105 focus-visible:ring-2"
+                                            style={{
+                                                borderColor: selected ? theme.accent.primary : theme.node.stroke,
+                                                background: selected ? `${theme.accent.primary}18` : theme.node.fill,
+                                                "--tw-ring-color": theme.accent.primary,
+                                            } as CSSProperties}
+                                            onClick={(event) => {
+                                                event.stopPropagation();
+                                                setBuilderMode(mode.id);
+                                            }}
+                                        >
+                                            <span className="grid size-8 shrink-0 place-items-center rounded-xl" style={{ background: selected ? `${theme.accent.primary}22` : theme.toolbar.itemHover, color: selected ? theme.accent.primary : theme.node.muted }}>
+                                                <Icon className="size-4" />
+                                            </span>
+                                            <span className="min-w-0 flex-1">
+                                                <span className="block text-sm font-semibold">{mode.label}</span>
+                                                <span className="mt-0.5 block text-[var(--fs-label)]" style={{ color: theme.node.muted }}>{mode.description}</span>
+                                            </span>
+                                            {selected ? <Check className="size-4 shrink-0" style={{ color: theme.accent.primary }} /> : null}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </section>
+                    </div>
+                )}
+            </div>
+            {rows.length ? (
+                <div className="flex h-9 shrink-0 items-center justify-center border-b" style={{ borderColor: theme.node.stroke, background: theme.node.panel }}>
                     <button
                         type="button"
-                        className="grid h-full min-h-36 w-full place-items-center"
+                        className="inline-flex h-7 items-center gap-1 rounded px-2 text-xs font-medium outline-none transition hover:bg-black/5 focus-visible:ring-2 dark:hover:bg-white/10"
+                        style={{ "--tw-ring-color": theme.node.muted } as CSSProperties}
                         onMouseDown={(event) => event.stopPropagation()}
                         onClick={(event) => {
                             event.stopPropagation();
                             onAddRow();
                         }}
                     >
-                        <span className="flex flex-col items-center gap-2.5">
-                            <span className="text-sm font-bold">＋ 添加第一个镜头</span>
-                            <span className="text-[var(--fs-label)] font-medium" style={{ color: theme.node.faint }}>
-                                可先连接「故事梗概 / 项目画风」节点，或在下方输入提示词一键生成分镜表
-                            </span>
-                        </span>
+                        <Plus className="size-3.5" />
+                        添加行
                     </button>
-                )}
-            </div>
-            <div className="flex h-9 shrink-0 items-center justify-center border-b" style={{ borderColor: theme.node.stroke, background: theme.node.panel }}>
-                <button
-                    type="button"
-                    className="inline-flex h-7 items-center gap-1 rounded px-2 text-xs font-medium outline-none transition hover:bg-black/5 focus-visible:ring-2 dark:hover:bg-white/10"
-                    style={{ "--tw-ring-color": theme.node.muted } as CSSProperties}
-                    onMouseDown={(event) => event.stopPropagation()}
-                    onClick={(event) => {
-                        event.stopPropagation();
-                        onAddRow();
-                    }}
-                >
-                    <Plus className="size-3.5" />
-                    添加行
-                </button>
-            </div>
+                </div>
+            ) : null}
             <div className="relative grid shrink-0 grid-rows-[minmax(0,1fr)_28px] gap-1.5 rounded-b-[17px] p-2.5" style={{ height: composerHeight, background: theme.node.panel }}>
                 <CanvasResourceMentionTextarea
                     rows={1}
@@ -394,7 +449,7 @@ export function CanvasScriptNodeContent({
                     className="thin-scrollbar h-full min-h-0 w-full touch-pan-y resize-none overflow-y-auto overflow-x-hidden overscroll-contain rounded-md border bg-transparent px-3 py-2 text-sm leading-5 outline-none transition placeholder:opacity-45 focus:ring-1"
                     style={{ borderColor: theme.node.stroke, color: theme.node.text, "--tw-ring-color": theme.node.muted } as CSSProperties}
                     value={prompt}
-                    placeholder="输入剧本或剧情，以及总时长等要求，自动拆分为镜头"
+                    placeholder={builderModePlaceholder(builderMode)}
                     onContentSizeChange={resizePrompt}
                     onChange={(value) => {
                         setPrompt(value);
