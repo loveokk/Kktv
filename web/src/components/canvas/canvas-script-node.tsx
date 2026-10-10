@@ -1,11 +1,11 @@
-import { Button, Dropdown, Input, InputNumber, Modal, Segmented, Select, Table } from "antd";
+import { Button, Dropdown, Input, InputNumber, Modal, Popover, Segmented, Select, Table } from "antd";
 import { Tooltip } from "@/components/ui/base/tooltip";
 import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 
 import { CheckboxGroup } from "@/components/ui/base/checkbox";
 import type { MenuProps } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { Check, ChevronDown, ChevronUp, Clapperboard, Copy, Expand, FileText, Film, Grid3X3, Image as ImageIcon, ListTree, Merge, MoreHorizontal, PencilLine, Plus, RefreshCw, Send, Square, Trash2, UserRound, Video } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, Clapperboard, Copy, Expand, FileText, Film, Grid3X3, Image as ImageIcon, ListTree, Merge, MoreHorizontal, PencilLine, Plus, RefreshCw, Send, Settings2, Square, Trash2, UserRound, Video } from "lucide-react";
 
 import { CanvasResourceMentionTextarea } from "@/components/canvas/canvas-resource-mention-textarea";
 import { StoryboardAssetsCell } from "@/components/canvas/storyboard-assets-cell";
@@ -279,6 +279,22 @@ export function CanvasScriptNodeContent({
                 <span className="text-[var(--fs-caption)] font-semibold tabular-nums" style={{ color: theme.node.muted }}>
                     {rows.length} 镜 · {totalDuration}s
                 </span>
+                <Tooltip title="添加镜头">
+                    <button
+                        type="button"
+                        className="grid size-7 place-items-center rounded outline-none transition hover:bg-black/5 focus-visible:ring-2 dark:hover:bg-white/10"
+                        style={{ "--tw-ring-color": theme.node.muted } as CSSProperties}
+                        onMouseDown={(event) => event.stopPropagation()}
+                        onPointerDown={(event) => event.stopPropagation()}
+                        onClick={(event) => {
+                            event.stopPropagation();
+                            onAddRow();
+                        }}
+                        aria-label="添加镜头"
+                    >
+                        <Plus className="size-3.5" />
+                    </button>
+                </Tooltip>
                 <Tooltip title="全屏编辑">
                     <button
                         type="button"
@@ -396,29 +412,9 @@ export function CanvasScriptNodeContent({
                     </button>
                 )}
             </div>
-            {rows.length ? (
-                <div className="flex h-9 shrink-0 items-center justify-center border-b" style={{ borderColor: theme.node.stroke, background: theme.node.panel }}>
-                    <button
-                        type="button"
-                        className="inline-flex h-7 items-center gap-1 rounded px-2 text-xs font-medium outline-none transition hover:bg-black/5 focus-visible:ring-2 dark:hover:bg-white/10"
-                        style={{ "--tw-ring-color": theme.node.muted } as CSSProperties}
-                        onMouseDown={(event) => event.stopPropagation()}
-                        onClick={(event) => {
-                            event.stopPropagation();
-                            onAddRow();
-                        }}
-                    >
-                        <Plus className="size-3.5" />
-                        添加行
-                    </button>
-                </div>
-            ) : null}
-            <div className="shrink-0 border-t border-b px-3 py-2.5" style={{ borderColor: theme.node.stroke, background: theme.node.panel }}>
-                <div className="mb-2 flex items-center gap-2">
-                    <FileText className="size-3.5" style={{ color: theme.node.muted }} />
-                    <span className="text-[var(--fs-label)] font-semibold">脚本生成器</span>
-                </div>
-                <div className="grid gap-2 md:grid-cols-3">
+            <div className="shrink-0 border-t border-b px-3 py-2" style={{ borderColor: theme.node.stroke, background: theme.node.panel }}>
+                <div className="flex flex-wrap items-center gap-2">
+                    <span className="mr-1 text-[var(--fs-label)] font-semibold" style={{ color: theme.node.muted }}>生成方式</span>
                     {SCRIPT_BUILDER_MODES.map((mode) => {
                         const Icon = mode.icon;
                         const selected = builderMode === mode.id;
@@ -426,11 +422,11 @@ export function CanvasScriptNodeContent({
                             <button
                                 key={mode.id}
                                 type="button"
-                                className="flex min-h-12 min-w-0 items-center gap-2 rounded-xl border px-3 text-left outline-none transition hover:-translate-y-0.5 hover:brightness-105 focus-visible:ring-2"
+                                className="inline-flex h-8 min-w-0 items-center gap-1.5 rounded-full border px-3 text-xs font-medium outline-none transition hover:brightness-105 focus-visible:ring-2"
                                 style={{
                                     borderColor: selected ? theme.accent.primary : theme.node.stroke,
                                     background: selected ? `${theme.accent.primary}18` : theme.node.fill,
-                                    color: theme.node.text,
+                                    color: selected ? theme.accent.primary : theme.node.text,
                                     "--tw-ring-color": theme.accent.primary,
                                 } as CSSProperties}
                                 onMouseDown={(event) => event.stopPropagation()}
@@ -439,11 +435,9 @@ export function CanvasScriptNodeContent({
                                     setBuilderMode(mode.id);
                                 }}
                             >
-                                <span className="grid size-7 shrink-0 place-items-center rounded-lg" style={{ background: selected ? `${theme.accent.primary}22` : theme.toolbar.itemHover, color: selected ? theme.accent.primary : theme.node.muted }}>
-                                    <Icon className="size-3.5" />
-                                </span>
-                                <span className="min-w-0 flex-1 truncate text-xs font-semibold">{mode.label}</span>
-                                {selected ? <Check className="size-3.5 shrink-0" style={{ color: theme.accent.primary }} /> : null}
+                                <Icon className="size-3.5 shrink-0" />
+                                <span className="truncate">{mode.label}</span>
+                                {selected ? <Check className="size-3 shrink-0" /> : null}
                             </button>
                         );
                     })}
@@ -495,32 +489,46 @@ export function CanvasScriptNodeContent({
                             自动拆分 · 时长自动
                         </span>
                     ) : (
-                        <Select<StoryboardShotCount>
-                            className="min-w-24"
-                            size="small"
-                            value={shotCount}
-                            disabled={node.metadata?.status === "loading"}
-                            options={[{ value: "auto", label: "自动拆分" }, ...Array.from({ length: 10 }, (_, index) => ({ value: String(index + 1) as StoryboardShotCount, label: `${index + 1} 镜` }))]}
-                            popupMatchSelectWidth={false}
-                            onChange={onShotCountChange}
-                        />
-                    )}
-                    {simpleMode ? null : (
-                        <Select<StoryboardShotDuration>
-                            className="min-w-24"
-                            size="small"
-                            value={shotDuration}
-                            disabled={node.metadata?.status === "loading"}
-                            options={[
-                                { value: "auto", label: "单镜时长自动" },
-                                { value: "5", label: "每镜 5 秒" },
-                                { value: "10", label: "每镜 10 秒" },
-                                { value: "15", label: "每镜 15 秒" },
-                                { value: "30", label: "每镜 30 秒" },
-                            ]}
-                            popupMatchSelectWidth={false}
-                            onChange={onShotDurationChange}
-                        />
+                        <Popover
+                            trigger="click"
+                            placement="topRight"
+                            content={
+                                <div className="grid w-48 gap-3">
+                                    <label className="grid gap-1 text-xs">
+                                        <span style={{ color: theme.node.muted }}>镜头数量</span>
+                                        <Select<StoryboardShotCount>
+                                            size="small"
+                                            value={shotCount}
+                                            disabled={node.metadata?.status === "loading"}
+                                            options={[{ value: "auto", label: "自动拆分" }, ...Array.from({ length: 10 }, (_, index) => ({ value: String(index + 1) as StoryboardShotCount, label: `${index + 1} 镜` }))]}
+                                            popupMatchSelectWidth={false}
+                                            onChange={onShotCountChange}
+                                        />
+                                    </label>
+                                    <label className="grid gap-1 text-xs">
+                                        <span style={{ color: theme.node.muted }}>单镜时长</span>
+                                        <Select<StoryboardShotDuration>
+                                            size="small"
+                                            value={shotDuration}
+                                            disabled={node.metadata?.status === "loading"}
+                                            options={[
+                                                { value: "auto", label: "自动" },
+                                                { value: "5", label: "5 秒" },
+                                                { value: "10", label: "10 秒" },
+                                                { value: "15", label: "15 秒" },
+                                                { value: "30", label: "30 秒" },
+                                            ]}
+                                            popupMatchSelectWidth={false}
+                                            onChange={onShotDurationChange}
+                                        />
+                                    </label>
+                                </div>
+                            }
+                        >
+                            <Button size="small" icon={<Settings2 className="size-3.5" />} style={{ color: theme.node.muted, borderColor: theme.node.stroke }}>
+                                设置
+                            </Button>
+                        </Popover>
                     )}
                     <Button
                         shape="circle"
