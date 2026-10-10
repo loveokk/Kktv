@@ -214,10 +214,6 @@ export function CanvasScriptNodeContent({
     const canMerge = pipeline.successfulVideoNodeIds.length >= 2 && pipeline.final.success === 0;
     const allRowIds = pipeline.rows.map((item) => item.row.id);
     const moreMenuItems: MenuProps["items"] = [
-        { key: "script-input", icon: <FileText className="size-3.5" />, label: "剧本生成分镜脚本", onClick: () => onOpenScriptInput?.() },
-        { key: "character-input", icon: <UserRound className="size-3.5" />, label: "角色生成分镜脚本", onClick: () => onOpenCharacterInput?.() },
-        { key: "write-storyboard", icon: <PencilLine className="size-3.5" />, label: "自己编写分镜脚本", onClick: () => onOpen() },
-        { type: "divider" },
         { key: "generate-images", icon: <ImageIcon className="size-3.5" />, label: "生成未完成分镜图", disabled: pipelineDisabled || pipeline.images.incomplete === 0, onClick: () => onGenerateImages(allRowIds) },
         { key: "generate-videos", icon: <Video className="size-3.5" />, label: "生成未完成视频", disabled: pipelineDisabled || pipeline.videos.incomplete === 0, onClick: () => onGenerateVideos(allRowIds) },
         {
@@ -403,22 +399,48 @@ export function CanvasScriptNodeContent({
                         </div>
                     ))
                 ) : (
-                    <button
-                        type="button"
-                        className="grid h-full min-h-36 w-full place-items-center"
-                        onMouseDown={(event) => event.stopPropagation()}
-                        onClick={(event) => {
-                            event.stopPropagation();
-                            onAddRow();
-                        }}
-                    >
-                        <span className="flex flex-col items-center gap-2.5">
-                            <span className="text-sm font-bold">＋ 添加第一个镜头</span>
-                            <span className="text-[var(--fs-label)] font-medium" style={{ color: theme.node.faint }}>
-                                点击右上角“...”选择生成流程
-                            </span>
-                        </span>
-                    </button>
+                    <div className="grid h-full min-h-[420px] w-full place-items-center px-8 py-10">
+                        <div className="w-full max-w-[520px]">
+                            <div className="mb-3 flex items-center gap-2 text-sm font-semibold" style={{ color: theme.node.text }}>
+                                <FileText className="size-4" />
+                                脚本生成器
+                            </div>
+                            <section className="rounded-[28px] border p-6" style={{ background: theme.node.panel, borderColor: theme.node.stroke }}>
+                                <div className="mb-8 flex justify-center">
+                                    <div className="grid w-20 gap-1.5" aria-hidden>
+                                        <span className="h-2 rounded-sm" style={{ background: theme.node.stroke }} />
+                                        <span className="h-2 rounded-sm" style={{ background: theme.node.stroke }} />
+                                        <span className="h-2 rounded-sm" style={{ background: theme.node.stroke }} />
+                                        <span className="h-2 w-2/3 rounded-sm" style={{ background: theme.node.stroke }} />
+                                    </div>
+                                </div>
+                                <div className="text-sm" style={{ color: theme.node.muted }}>尝试：</div>
+                                <div className="mt-4 grid gap-3">
+                                    {SCRIPT_BUILDER_MODES.map((mode) => {
+                                        const Icon = mode.icon;
+                                        return (
+                                            <button
+                                                key={mode.id}
+                                                type="button"
+                                                className="flex h-10 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-medium outline-none transition hover:bg-white/[.06] focus-visible:ring-2"
+                                                style={{ color: theme.node.text, "--tw-ring-color": theme.accent.primary } as CSSProperties}
+                                                onMouseDown={(event) => event.stopPropagation()}
+                                                onClick={(event) => {
+                                                    event.stopPropagation();
+                                                    if (mode.id === "script") onOpenScriptInput?.();
+                                                    else if (mode.id === "characters") onOpenCharacterInput?.();
+                                                    else onOpen();
+                                                }}
+                                            >
+                                                <Icon className="size-4 shrink-0" />
+                                                <span>{mode.label}</span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </section>
+                        </div>
+                    </div>
                 )}
             </div>
             <Modal
